@@ -16,12 +16,14 @@ import {
   Settings,
   Bell,
   CheckCircle2,
+  Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VocabularyDashboard } from './components/Vocabulary/VocabularyDashboard';
+import { Pricing } from './components/Premium/Pricing';
 
 // --- Types ---
-type TabType = 'Home' | 'Translation' | 'Grammar' | 'Vocabulary' | 'Games';
+type TabType = 'Home' | 'Translation' | 'Grammar' | 'Vocabulary' | 'Games' | 'Premium';
 
 // --- Sub-components ---
 
@@ -87,6 +89,7 @@ export default function App() {
             <NavItem icon={BookOpen} label="Grammar" active={activeTab === 'Grammar'} onClick={() => setActiveTab('Grammar')} />
             <NavItem icon={Brain} label="Vocabulary" active={activeTab === 'Vocabulary'} onClick={() => setActiveTab('Vocabulary')} />
             <NavItem icon={Zap} label="Games" active={activeTab === 'Games'} onClick={() => setActiveTab('Games')} />
+            <NavItem icon={Star} label="Premium" active={activeTab === 'Premium'} onClick={() => setActiveTab('Premium')} />
           </nav>
         </div>
 
@@ -97,7 +100,10 @@ export default function App() {
               <p className="text-[10px] text-text-secondary leading-relaxed mb-4">
                 Get unlimited AI corrections and advanced learning paths.
               </p>
-              <button className="bg-primary text-white w-full py-2 rounded-lg text-xs font-bold shadow-md hover:bg-primary/90 transition-all">
+              <button 
+                onClick={() => setActiveTab('Premium')}
+                className="bg-primary text-white w-full py-2 rounded-lg text-xs font-bold shadow-md hover:bg-primary/90 transition-all"
+              >
                 Learn More
               </button>
             </div>
@@ -146,6 +152,7 @@ export default function App() {
             {activeTab === 'Grammar' && <GrammarView key="grammar" />}
             {activeTab === 'Vocabulary' && <VocabularyDashboard key="vocabulary" />}
             {activeTab === 'Games' && <GamesView key="games" />}
+            {activeTab === 'Premium' && <Pricing key="premium" />}
           </AnimatePresence>
         </div>
       </main>
