@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -22,6 +22,12 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [knownWords, setKnownWords] = useState<string[]>([]);
   const [direction, setDirection] = useState(0);
+
+  // Reset index when words change (even if key should handle it)
+  useEffect(() => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+  }, [words]);
 
   const currentWord = words[currentIndex];
 
@@ -65,51 +71,73 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, currentWord.id, handleNext, handlePrev]);
+  }, [currentIndex, currentWord?.id, handleNext, handlePrev]);
+
+  if (!currentWord) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 text-center">
+        <p className="text-text-secondary mb-4">No words to display.</p>
+        <button 
+          onClick={onFinish}
+          className="bg-primary text-white px-6 py-2 rounded-xl font-bold"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   const variants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
+      x: direction > 0 ? 500 : -500,
       opacity: 0,
-      scale: 0.8
+      scale: 0.95
     }),
     center: {
       zIndex: 1,
       x: 0,
       opacity: 1,
-      scale: 1
+      scale: 1,
+      transition: {
+        x: { type: "spring", stiffness: 300, damping: 30 },
+        opacity: { duration: 0.2 }
+      }
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? 300 : -300,
+      x: direction < 0 ? 500 : -500,
       opacity: 0,
-      scale: 0.8
+      scale: 0.95,
+      transition: {
+        x: { type: "spring", stiffness: 300, damping: 30 },
+        opacity: { duration: 0.2 }
+      }
     })
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md mx-auto py-8">
+    <div className="flex flex-col items-center w-full max-w-md mx-auto py-8 min-h-[600px]">
       {/* The Card */}
-      <div className="relative w-full aspect-[3/4] perspective-1000 mb-8">
-        <AnimatePresence initial={false} custom={direction}>
+      <div className="relative w-full aspect-[3/4] perspective-1000 mb-8 min-h-[450px]">
+        <AnimatePresence mode="popLayout" custom={direction}>
           <motion.div
-            key={currentIndex}
+            key={currentWord.id}
             custom={direction}
             variants={variants}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute inset-0 cursor-pointer"
+            className="absolute inset-0 cursor-pointer preserve-3d w-full h-full"
             onClick={() => setIsFlipped(!isFlipped)}
           >
             <motion.div
+              initial={false}
               animate={{ rotateY: isFlipped ? 180 : 0 }}
-              transition={{ duration: 0.6, type: 'spring', damping: 20 }}
-              className="w-full h-full relative preserve-3d shadow-xl rounded-[2.5rem] bg-white border border-border overflow-hidden"
+              transition={{ duration: 0.6, type: "spring", damping: 20, stiffness: 100 }}
+              className="w-full h-full relative preserve-3d"
             >
               {/* Front Side */}
-              <div className="absolute inset-0 backface-hidden p-8 flex flex-col items-center justify-between bg-white">
+              <div className="absolute inset-0 backface-hidden p-8 flex flex-col items-center justify-between bg-white shadow-xl rounded-[2.5rem] border border-border">
                 <div className="w-full flex justify-between items-center">
                   <div className={cn(
                     "px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 transition-colors",
@@ -129,13 +157,25 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish }) => {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center text-center">
+                <div className="flex flex-col items-center text-center w-full">
                   {currentWord.article && (
-                    <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full mb-4 tracking-widest">
+                    <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full mb-6 tracking-widest uppercase">
                       {currentWord.article} • {currentWord.level}
                     </span>
                   )}
-                  <h2 className="text-5xl font-black text-text-primary mb-2">
+                  
+                  {currentWord.imageUrl && (
+                    <div className="w-full aspect-video rounded-2xl overflow-hidden mb-6 border border-border shadow-inner bg-slate-50 relative">
+                      <img 
+                        src={currentWord.imageUrl} 
+                        alt={currentWord.word}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
+
+                  <h2 className="text-4xl font-black text-text-primary mb-2">
                     {currentWord.word}
                   </h2>
                   <p className="text-text-secondary font-mono text-lg italic opacity-60">
@@ -155,15 +195,18 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish }) => {
               </div>
 
               {/* Back Side */}
-              <div className="absolute inset-0 backface-hidden p-8 flex flex-col items-center justify-center bg-primary text-white rotate-y-180">
+              <div 
+                className="absolute inset-0 backface-hidden p-8 flex flex-col items-center justify-center bg-primary text-white shadow-xl rounded-[2.5rem] rotate-y-180"
+                style={{ backfaceVisibility: 'hidden' }}
+              >
                 <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full mb-6 uppercase tracking-widest">
                   Nghĩa Tiếng Việt
                 </span>
-                <h2 className="text-4xl font-bold mb-4">
+                <h2 className="text-4xl font-bold mb-4 text-center">
                   {currentWord.meaning}
                 </h2>
                 {currentWord.plural && (
-                  <p className="text-lg opacity-80">
+                  <p className="text-lg opacity-80 text-center">
                     Số nhiều: <span className="font-bold underline decoration-white/30">{currentWord.plural}</span>
                   </p>
                 )}
