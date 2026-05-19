@@ -4,12 +4,16 @@ import { Zap, Brain, Trophy, ChevronRight } from 'lucide-react';
 import { SectionHeader } from './SectionHeader';
 import { cn } from '@/lib/utils';
 
-export function HomeView() {
+import { UserProfile } from '../../services/userService';
+
+export function HomeView({ profile }: { profile: UserProfile | null }) {
+  const firstName = profile?.displayName?.split(' ')[0] || 'Learner';
+  
   return (
     <div className="space-y-12">
       <SectionHeader 
-        title="Willkommen zurück, Max!" 
-        subtitle="You're on a 14-day streak. Keep it up!"
+        title={`Willkommen zurück, ${firstName}!`} 
+        subtitle={`You're on a ${profile?.streak || 0}-day streak. Keep it up!`}
         icon={Zap}
       />
 
@@ -56,12 +60,12 @@ export function HomeView() {
             <div className="flex justify-between items-end mb-4">
               <div>
                 <p className="text-[10px] uppercase font-bold text-text-secondary mb-1">XP Goal</p>
-                <p className="font-bold text-lg">1,240 / 2,000</p>
+                <p className="font-bold text-lg">{profile?.xp || 0} / 2,000</p>
               </div>
-              <span className="text-primary font-bold text-xs">62%</span>
+              <span className="text-primary font-bold text-xs">{profile ? Math.min(Math.round((profile.xp / 2000) * 100), 100) : 0}%</span>
             </div>
             <div className="w-full bg-background h-2 rounded-full overflow-hidden">
-              <div className="bg-primary h-full" style={{ width: '62%' }} />
+              <div className="bg-primary h-full" style={{ width: `${profile ? Math.min((profile.xp / 2000) * 100, 100) : 0}%` }} />
             </div>
           </div>
         </div>

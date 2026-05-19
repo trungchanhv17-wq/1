@@ -1,0 +1,30 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Information about the user's progress and stats.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique identifier." },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "xp": { "type": "number", "description": "Experience points earned." },
+        "streak": { "type": "number", "description": "Consecutive days learned." },
+        "level": { "type": "string", "description": "German proficiency level (A1, A2, etc.)" },
+        "hearts": { "type": "number", "description": "Remaining lives." },
+        "completedLessons": { "type": "array", "description": "List of lesson IDs completed." },
+        "premiumStatus": { "type": "boolean" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores user profile and progress data."
+    }
+  }
+}

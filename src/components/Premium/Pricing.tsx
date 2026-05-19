@@ -3,7 +3,17 @@ import { motion } from 'motion/react';
 import { Check, Star, Zap, Shield, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const plans = [
+interface Plan {
+  name: string;
+  price: string;
+  description: string;
+  features: string[];
+  buttonText: string;
+  highlight: boolean;
+  icon: React.ElementType;
+}
+
+const plans: Plan[] = [
   {
     name: 'Free',
     price: '0',
@@ -51,7 +61,43 @@ const plans = [
   }
 ];
 
-export const Pricing = () => {
+export const Pricing = ({ userProfile }: { userProfile: { uid?: string; email?: string; premiumStatus?: boolean } | null }) => {
+  const [loading, setLoading] = React.useState<string | null>(null);
+
+  const handleUpgrade = async (plan: Plan) => {
+    if (plan.name === 'Free') return;
+    if (userProfile?.premiumStatus && plan.name === 'Pro') return;
+    
+    setLoading(plan.name);
+    try {
+      const priceId = plan.name === 'Pro' 
+        ? (import.meta.env.VITE_STRIPE_PRO_PRICE_ID || 'price_pro_default')
+        : (import.meta.env.VITE_STRIPE_LIFETIME_PRICE_ID || 'price_lifetime_default');
+
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId,
+          userId: userProfile?.uid,
+          userEmail: userProfile?.email
+        }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.error) {
+        alert(data.error);
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      alert('Failed to initiate checkout. Please check console for details.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -74,73 +120,98 @@ export const Pricing = () => {
         <p className="text-text-secondary">
           Choose the plan that fits your learning pace. No hidden fees, cancel anytime.
         </p>
+        <div className="flex items-center justify-center gap-6 pt-2">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+            <Shield className="w-3 h-3 text-emerald-500" /> Secure Payments by Stripe
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+            🌎 International Cards Accepted
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((plan, index) => (
-          <motion.div
-            key={plan.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ y: -10 }}
-            className={cn(
-              "relative bg-white rounded-[2.5rem] p-8 border transition-all duration-500",
-              plan.highlight 
-                ? "border-primary shadow-2xl shadow-primary/20 scale-105 z-10" 
-                : "border-border shadow-sm hover:shadow-xl"
-            )}
-          >
-            {plan.highlight && (
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-primary text-white px-6 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
-                Most Popular
-              </div>
-            )}
-
-            <div className="space-y-6">
-              <div className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center",
-                plan.highlight ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-500"
-              )}>
-                <plan.icon className="w-7 h-7" />
-              </div>
-
-              <div>
-                <h3 className="text-2xl font-bold">{plan.name}</h3>
-                <p className="text-sm text-text-secondary mt-1">{plan.description}</p>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold">${plan.price}</span>
-                {plan.name !== 'Lifetime' && <span className="text-text-secondary text-sm">/month</span>}
-              </div>
-
-              <div className="space-y-4 pt-4">
-                {plan.features.map((feature) => (
-                  <div key={feature} className="flex items-start gap-3">
-                    <div className={cn(
-                      "mt-1 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0",
-                      plan.highlight ? "bg-primary/20 text-primary" : "bg-slate-100 text-slate-400"
-                    )}>
-                      <Check className="w-3 h-3" />
-                    </div>
-                    <span className="text-sm text-text-secondary leading-tight">{feature}</span>
-                  </div>
-                ))}
-              </div>
-
-              <button className={cn(
-                "w-full py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95",
+        {plans.map((plan, index) => {
+          const isCurrentPlan = (plan.name === 'Free' && !userProfile?.premiumStatus) || (plan.name === 'Pro' && userProfile?.premiumStatus);
+          
+          return (
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ y: -10 }}
+              className={cn(
+                "relative bg-white rounded-[2.5rem] p-8 border transition-all duration-500",
                 plan.highlight 
-                  ? "bg-primary text-white hover:bg-primary/90 shadow-primary/20" 
-                  : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20",
-                plan.name === 'Free' && "bg-slate-100 text-slate-500 hover:bg-slate-200 shadow-none cursor-default"
-              )}>
-                {plan.buttonText}
-              </button>
-            </div>
-          </motion.div>
-        ))}
+                  ? "border-primary shadow-2xl shadow-primary/20 scale-105 z-10" 
+                  : "border-border shadow-sm hover:shadow-xl"
+              )}
+            >
+              {plan.highlight && (
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-primary text-white px-6 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
+                  Most Popular
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div className={cn(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center",
+                  plan.highlight ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-500"
+                )}>
+                  <plan.icon className="w-7 h-7" />
+                </div>
+
+                <div>
+                  <h3 className="text-2xl font-bold">{plan.name}</h3>
+                  <p className="text-sm text-text-secondary mt-1">{plan.description}</p>
+                </div>
+
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold">${plan.price}</span>
+                  {plan.name !== 'Lifetime' && <span className="text-text-secondary text-sm">/month</span>}
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  {plan.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-3">
+                      <div className={cn(
+                        "mt-1 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0",
+                        plan.highlight ? "bg-primary/20 text-primary" : "bg-slate-100 text-slate-400"
+                      )}>
+                        <Check className="w-3 h-3" />
+                      </div>
+                      <span className="text-sm text-text-secondary leading-tight">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => handleUpgrade(plan)}
+                  disabled={loading === plan.name || isCurrentPlan}
+                  className={cn(
+                  "w-full py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2",
+                  plan.highlight 
+                    ? "bg-primary text-white hover:bg-primary/90 shadow-primary/20" 
+                    : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20",
+                  isCurrentPlan && "bg-slate-100 text-slate-500 hover:bg-slate-200 shadow-none cursor-default",
+                  (loading === plan.name) && "opacity-70 cursor-not-allowed"
+                )}>
+                  {loading === plan.name ? (
+                    <>
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                      />
+                      Processing...
+                    </>
+                  ) : isCurrentPlan ? 'Current Plan' : plan.buttonText}
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden">

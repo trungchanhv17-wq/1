@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
   Languages, 
@@ -13,8 +13,13 @@ import {
   Star,
   BookOpen,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Loader2
 } from 'lucide-react';
+import { User } from 'firebase/auth';
 import { cn } from '@/lib/utils';
 import { VocabularyDashboard } from './components/Vocabulary/VocabularyDashboard';
 import { Pricing } from './components/Premium/Pricing';
@@ -23,6 +28,8 @@ import { HomeView } from './components/Views/HomeView';
 import { TranslationView } from './components/Views/TranslationView';
 import { GrammarView } from './components/Views/GrammarView';
 import { GamesView } from './components/Views/GamesView';
+import { LoginPage } from './components/Auth/LoginPage';
+import { authService, userService, UserProfile } from './services/userService';
 
 // --- Types ---
 type TabType = 'Home' | 'Translation' | 'Grammar' | 'Vocabulary' | 'Games' | 'Premium';
@@ -32,6 +39,73 @@ type TabType = 'Home' | 'Translation' | 'Grammar' | 'Vocabulary' | 'Games' | 'Pr
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('Home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = authService.onAuthChange(async (firebaseUser) => {
+      setAuthLoading(true);
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        const userProfile = await userService.getUserProfile(firebaseUser.uid);
+        setProfile(userProfile);
+
+        // Check for payment success session
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        if (sessionId && userProfile && !userProfile.premiumStatus) {
+            try {
+                const res = await fetch(`/api/verify-session?sessionId=${sessionId}`);
+                const data = await res.json();
+                if (data.success && data.userId === firebaseUser.uid) {
+                    await userService.updateUserStats(firebaseUser.uid, { premiumStatus: true });
+                    setProfile({ ...userProfile, premiumStatus: true });
+                    alert('Successfully upgraded to Pro! Willkommen!');
+                    // Clear the query param
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            } catch (err) {
+                console.error('Session verification failed', err);
+            }
+        }
+
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleUpdateXP = async (xpGain: number) => {
+    if (user && profile) {
+      const newXP = (profile.xp || 0) + xpGain;
+      await userService.updateUserStats(user.uid, { xp: newXP });
+      setProfile({ ...profile, xp: newXP });
+    }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setActiveTab('Home');
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-10 h-10 text-slate-900 animate-spin" />
+        <p className="text-sm font-bold text-slate-900 animate-pulse">Ruma is waking up...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage onLoginSuccess={() => {}} />;
+  }
 
   const tabs: { type: TabType; label: string; icon: React.ElementType }[] = [
     { type: 'Home', label: 'Dashboard', icon: Layout },
@@ -47,8 +121,8 @@ export default function App() {
       {/* Mobile Header */}
       <header className="md:hidden h-16 bg-white/70 backdrop-blur-md border-b border-border px-6 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <Sparkles className="text-primary w-5 h-5" />
-          <span className="font-bold text-xl tracking-tighter italic">Lern.ai</span>
+          <img src="/src/assets/images/ruma_logo_png_1779102933223.png" alt="Ruma Logo" className="w-8 h-8 object-contain" />
+          <span className="font-black text-xl tracking-tighter uppercase italic text-slate-900">Ruma</span>
         </div>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -60,24 +134,43 @@ export default function App() {
 
       {/* Sidebar Navigation */}
       <aside className={cn(
-        "fixed inset-0 z-[60] bg-white transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:bg-white/50 md:backdrop-blur-xl md:border-r md:border-border md:flex md:flex-col md:w-72 md:h-screen md:sticky md:top-0",
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        "fixed inset-0 z-[60] bg-white transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:bg-white/50 md:backdrop-blur-xl md:border-r md:border-border md:flex md:flex-col md:h-screen md:sticky md:top-0 transition-[width]",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+        isSidebarCollapsed ? "md:w-20" : "md:w-72"
       )}>
-        <div className="p-8 flex flex-col h-full">
-          <div className="hidden md:flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <Sparkles className="text-white w-6 h-6" />
+        <div className={cn(
+          "p-8 flex flex-col h-full",
+          isSidebarCollapsed && "md:p-4 md:items-center"
+        )}>
+          <div className={cn(
+            "hidden md:flex items-center justify-between mb-10 w-full",
+            isSidebarCollapsed && "flex-col gap-8 px-0"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/20 shrink-0 overflow-hidden">
+                <img src="/src/assets/images/ruma_logo_png_1779102933223.png" alt="Ruma Logo" className="w-full h-full object-cover" />
+              </div>
+              {!isSidebarCollapsed && <span className="font-black text-2xl tracking-tighter uppercase italic text-slate-900">Ruma</span>}
             </div>
-            <span className="font-bold text-2xl tracking-tighter italic">Lern.ai</span>
+            <button 
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className={cn(
+                "hidden md:flex p-2 hover:bg-white/80 border border-border/50 rounded-lg transition-all shadow-sm",
+                isSidebarCollapsed && "mt-2"
+              )}
+            >
+              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-1 w-full">
             {tabs.map((tab) => (
               <NavItem 
                 key={tab.type}
                 icon={tab.icon} 
                 label={tab.label} 
                 active={activeTab === tab.type} 
+                collapsed={isSidebarCollapsed}
                 onClick={() => {
                   setActiveTab(tab.type);
                   setIsSidebarOpen(false);
@@ -86,33 +179,71 @@ export default function App() {
             ))}
           </nav>
 
-          <div className="mt-auto pt-8 space-y-6">
-            <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl border border-primary/20 relative overflow-hidden group">
-              <div className="relative z-10">
-                <h4 className="font-bold text-sm mb-1">Upgrade to Pro</h4>
-                <p className="text-[10px] text-text-secondary leading-relaxed mb-4">
-                  Get unlimited AI corrections and learning paths.
-                </p>
-                <button 
-                  onClick={() => {
-                    setActiveTab('Premium');
-                    setIsSidebarOpen(false);
-                  }}
-                  className="bg-primary text-white w-full py-2 rounded-lg text-xs font-bold shadow-md"
-                >
-                  Learn More
-                </button>
+          <div className={cn(
+            "mt-auto pt-8 space-y-6 w-full",
+            isSidebarCollapsed && "items-center"
+          )}>
+            {!isSidebarCollapsed ? (
+              <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl border border-primary/20 relative overflow-hidden group">
+                <div className="relative z-10">
+                  <h4 className="font-bold text-sm mb-1">Upgrade to Pro</h4>
+                  <p className="text-[10px] text-text-secondary leading-relaxed mb-4">
+                    Get unlimited AI corrections and learning paths.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setActiveTab('Premium');
+                      setIsSidebarOpen(false);
+                    }}
+                    className="bg-primary text-white w-full py-2 rounded-lg text-xs font-bold shadow-md"
+                  >
+                    Learn More
+                  </button>
+                </div>
+                <Sparkles className="absolute -right-4 -bottom-4 w-16 h-16 text-primary/10" />
               </div>
-              <Sparkles className="absolute -right-4 -bottom-4 w-16 h-16 text-primary/10" />
-            </div>
+            ) : (
+              <button 
+                onClick={() => setActiveTab('Premium')}
+                className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 hover:bg-primary/20 transition-colors mx-auto"
+              >
+                <Sparkles className="text-primary w-5 h-5" />
+              </button>
+            )}
             
-            <div className="flex items-center gap-4 px-2">
-              <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="font-bold text-sm truncate">Max Schneider</p>
-                <p className="text-[10px] text-text-secondary">Level 14 • B2 Learner</p>
-              </div>
-              <Settings className="w-4 h-4 text-text-secondary ml-auto cursor-pointer hover:text-primary transition-colors" />
+            <div className={cn(
+              "flex items-center gap-4 px-2",
+              isSidebarCollapsed && "flex-col px-0"
+            )}>
+              {profile?.photoURL ? (
+                <img src={profile.photoURL} alt={profile.displayName} className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-primary/10" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-slate-400">
+                  {profile?.displayName?.charAt(0) || 'U'}
+                </div>
+              )}
+              {!isSidebarCollapsed && (
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-sm truncate">{profile?.displayName || 'Learner'}</p>
+                    {profile?.premiumStatus && (
+                      <span className="bg-primary text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Pro</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-text-secondary">Level {profile?.level || 'A1'} • {profile?.xp || 0} XP</p>
+                </div>
+              )}
+              {!isSidebarCollapsed ? (
+                <div className="flex items-center gap-2 ml-auto">
+                  <Settings className="w-4 h-4 text-text-secondary cursor-pointer hover:text-primary transition-colors" />
+                  <LogOut onClick={handleLogout} className="w-4 h-4 text-text-secondary cursor-pointer hover:text-red-500 transition-colors" />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 mt-4">
+                  <Settings className="w-4 h-4 text-text-secondary cursor-pointer hover:text-primary transition-colors" />
+                  <LogOut onClick={handleLogout} className="w-4 h-4 text-text-secondary cursor-pointer hover:text-red-500 transition-colors" />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -141,7 +272,7 @@ export default function App() {
 
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2 bg-orange-50 px-4 py-2 rounded-xl text-orange-600 border border-orange-100 font-bold text-sm">
-              <Flame className="w-4 h-4 fill-current" /> 14 Days
+              <Flame className="w-4 h-4 fill-current" /> {profile?.streak || 0} Days
             </div>
             <div className="relative">
               <Bell className="w-5 h-5 text-text-secondary cursor-pointer hover:text-primary transition-colors" />
@@ -153,19 +284,19 @@ export default function App() {
         {/* Mobile quick actions / search? */}
         <div className="md:hidden p-4 border-b border-border bg-white flex items-center justify-between">
           <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-lg text-orange-600 border border-orange-100 font-bold text-xs">
-            <Flame className="w-3 h-3 fill-current" /> 14 Days streak
+            <Flame className="w-3 h-3 fill-current" /> {profile?.streak || 0} Days streak
           </div>
           <Bell className="w-5 h-5 text-text-secondary" />
         </div>
 
         <div className="p-6 md:p-10 max-w-7xl mx-auto pb-24 md:pb-10">
-          <AnimatePresence>
-            {activeTab === 'Home' && <HomeView key="home" />}
-            {activeTab === 'Translation' && <TranslationView key="translation" />}
+          <AnimatePresence mode="wait">
+            {activeTab === 'Home' && <HomeView key="home" profile={profile} />}
+            {activeTab === 'Translation' && <TranslationView key="translation" onUpdateXP={handleUpdateXP} />}
             {activeTab === 'Grammar' && <GrammarView key="grammar" />}
             {activeTab === 'Vocabulary' && <VocabularyDashboard key="vocabulary" />}
             {activeTab === 'Games' && <GamesView key="games" />}
-            {activeTab === 'Premium' && <Pricing key="premium" />}
+            {activeTab === 'Premium' && <Pricing key="premium" userProfile={profile} />}
           </AnimatePresence>
         </div>
 

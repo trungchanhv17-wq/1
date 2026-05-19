@@ -15,9 +15,10 @@ import { VocabularyWord } from '@/constants/vocabularyData';
 interface FlashcardProps {
   words: VocabularyWord[];
   onFinish?: () => void;
+  onStartQuiz?: () => void;
 }
 
-export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish }) => {
+export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish, onStartQuiz }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [knownWords, setKnownWords] = useState<string[]>([]);
@@ -282,7 +283,10 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish }) => {
         </div>
       </div>
 
-      <button className="w-full py-4 bg-primary/5 text-primary font-bold rounded-2xl border border-primary/20 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 mb-8">
+      <button 
+        onClick={onStartQuiz}
+        className="w-full py-4 bg-primary/5 text-primary font-bold rounded-2xl border border-primary/20 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 mb-8"
+      >
         🏷️ Luyện giống danh từ (der/die/das)
       </button>
 
