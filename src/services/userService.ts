@@ -1,4 +1,12 @@
-import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { 
+  signInWithRedirect, 
+  getRedirectResult,
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged, 
+  User 
+} from 'firebase/auth';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, FieldValue } from 'firebase/firestore';
 
@@ -57,11 +65,24 @@ export interface UserProfile {
 export const authService = {
   async loginWithGoogle() {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await this.ensureUserProfile(result.user);
-      return result.user;
+      // Use redirect instead of popup to avoid "popup-blocked" in iframes
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
-      console.error('Google login error:', error);
+      console.error('Google login error initiation:', error);
+      throw error;
+    }
+  },
+
+  async handleRedirectResult() {
+    try {
+      const result = await getRedirectResult(auth);
+      if (result) {
+        await this.ensureUserProfile(result.user);
+        return result.user;
+      }
+      return null;
+    } catch (error) {
+      console.error('Google redirect result error:', error);
       throw error;
     }
   },

@@ -46,6 +46,16 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // Handle redirect result if coming back from Google
+        await authService.handleRedirectResult();
+      } catch (err) {
+        console.error('Redirect result handling failed:', err);
+      }
+    };
+    initAuth();
+
     const unsubscribe = authService.onAuthChange(async (firebaseUser) => {
       setAuthLoading(true);
       if (firebaseUser) {
