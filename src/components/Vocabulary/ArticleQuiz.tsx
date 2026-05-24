@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VOCABULARY_DATA, VocabularyWord } from '@/constants/vocabularyData';
+import { playSoundEffect } from '../../utils/soundEffects';
+import { useLanguage } from '../../context/LanguageContext';
 
 type Article = 'DER' | 'DIE' | 'DAS';
 
@@ -39,6 +41,7 @@ const SHAKE_ANIMATION = {
 };
 
 export const ArticleQuiz = ({ onExit, initialTopic }: { onExit: () => void; initialTopic?: string | 'ALL' }) => {
+  const { nativeLanguage } = useLanguage();
   const [gameState, setGameState] = useState<'IDLE' | 'SELECT_TOPIC' | 'PLAYING' | 'FINISHED'>(initialTopic ? 'PLAYING' : 'IDLE');
   const [selectedTopic, setSelectedTopic] = useState<string | 'ALL'>(initialTopic || 'ALL');
   const [quizWords, setQuizWords] = useState<VocabularyWord[]>([]);
@@ -163,6 +166,7 @@ export const ArticleQuiz = ({ onExit, initialTopic }: { onExit: () => void; init
     });
     setPressureMsg('⏰ Time Out!');
     setState(prev => ({ ...prev, combo: 0, wrong: prev.wrong + 1, isAnswered: true }));
+    playSoundEffect('wrong');
     speakAnswer(currentWord);
     setTimeout(nextQuestion, 2000);
   };
@@ -205,6 +209,7 @@ export const ArticleQuiz = ({ onExit, initialTopic }: { onExit: () => void; init
         correct: prev.correct + 1,
         isAnswered: true 
       }));
+      playSoundEffect('correct');
     } else {
       setFeedback({ 
         isCorrect: false, 
@@ -216,6 +221,7 @@ export const ArticleQuiz = ({ onExit, initialTopic }: { onExit: () => void; init
         wrong: prev.wrong + 1, 
         isAnswered: true 
       }));
+      playSoundEffect('wrong');
     }
     
     speakAnswer(currentWord);
@@ -435,7 +441,7 @@ export const ArticleQuiz = ({ onExit, initialTopic }: { onExit: () => void; init
                {currentWord.word}
              </h2>
              <p className="text-2xl font-semibold text-[#6C63FF] opacity-90 transition-all">
-               {currentWord.meaning}
+               {nativeLanguage === 'vi' ? (currentWord.meaning_vi || currentWord.meaning) : (currentWord.meaning_en || currentWord.meaning)}
              </p>
            </div>
            

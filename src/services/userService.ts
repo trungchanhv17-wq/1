@@ -1,6 +1,5 @@
 import { 
-  signInWithRedirect, 
-  getRedirectResult,
+  signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
@@ -65,24 +64,13 @@ export interface UserProfile {
 export const authService = {
   async loginWithGoogle() {
     try {
-      // Use redirect instead of popup to avoid "popup-blocked" in iframes
-      await signInWithRedirect(auth, googleProvider);
-    } catch (error) {
-      console.error('Google login error initiation:', error);
-      throw error;
-    }
-  },
-
-  async handleRedirectResult() {
-    try {
-      const result = await getRedirectResult(auth);
-      if (result) {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
         await this.ensureUserProfile(result.user);
-        return result.user;
       }
-      return null;
+      return result.user;
     } catch (error) {
-      console.error('Google redirect result error:', error);
+      console.error('Google login error:', error);
       throw error;
     }
   },

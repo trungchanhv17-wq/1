@@ -1,6 +1,6 @@
 {
-  "name": "Ruma",
-  "description": "Learn German smarter with Ruma - AI-powered translation, grammar, and vocabulary practice.",
+  "name": "Delerny",
+  "description": "Learn German naturally with Delerny - AI-powered grammar, translation, and vocabulary practice.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

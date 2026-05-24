@@ -100,7 +100,7 @@ async function startServer() {
 
   // API Route for translation analysis
   app.post("/api/analyze-translation", async (req, res) => {
-    const { prompt, translation, level, context } = req.body;
+    const { prompt, translation, level, context, nativeLanguage } = req.body;
 
     if (!prompt || !translation) {
       return res.status(400).json({ error: "Missing prompt or translation" });
@@ -110,28 +110,35 @@ async function startServer() {
       return res.status(503).json({ error: "Gemini API key not configured" });
     }
 
+    const languageName = nativeLanguage === 'vi' ? 'Vietnamese (Tiếng Việt)' : 'English';
+
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: [{
           role: "user",
           parts: [{
             text: `Analyze this German translation.
-English Prompt: "${prompt}"
-German Translation: "${translation}"
+Native language of the student: ${languageName}
+Source Prompt (meaning to render in German): "${prompt}"
+German Translation written by student: "${translation}"
 User Level: ${level || 'B1'}
 Context: ${context || 'General'}
+
+CRITICAL INSTRUCTION FOR EXPLANATIONS AND LANGUAGE:
+- You must explain everything, including the "feedback", individual bullet items in "improvements", and the "explanation" fields, entirely in ${languageName}.
+- Keep all German training terms, German sample words, and the "correctedSentence" strictly in standard natural German. Do NOT translate the German training text or corrected German structures into the student's native language.
 
 Provide feedback in JSON format with the following structure:
 {
   "isCorrect": boolean,
-  "feedback": string,
+  "feedback": "An encouraging review sum in ${languageName}",
   "grammarScore": number (0-100),
   "precisionScore": number (0-100),
   "naturalnessScore": number (0-100),
-  "improvements": string[],
-  "explanation": string,
-  "correctedSentence": string
+  "improvements": ["Precise bullet points in ${languageName} describing vocabulary adjustments, word prep, or verb placements"],
+  "explanation": "A structural overview explaining specific German casing rules, verbs, or conjunctions in ${languageName}",
+  "correctedSentence": "A flawless, natural, standard German translation matching native fluency"
 }`
           }]
         }],

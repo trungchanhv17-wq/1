@@ -1,110 +1,162 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { Zap, Brain, Trophy, ChevronRight } from 'lucide-react';
+import { Zap, Brain, ChevronRight, Settings, Check } from 'lucide-react';
 import { SectionHeader } from './SectionHeader';
-import { cn } from '@/lib/utils';
-
+import { useLanguage } from '../../context/LanguageContext';
 import { UserProfile } from '../../services/userService';
 
 export function HomeView({ profile }: { profile: UserProfile | null }) {
+  const { nativeLanguage, setNativeLanguage, t } = useLanguage();
   const firstName = profile?.displayName?.split(' ')[0] || 'Learner';
-  
+
+  const welcomeSubtitle = nativeLanguage === 'vi'
+    ? `Chuỗi ngày học liên tục: ${profile?.streak || 0} ngày. Hãy duy trì nhé!`
+    : `You're on a ${profile?.streak || 0}-day streak. Keep it up!`;
+
+  const activeObjectiveDesc = nativeLanguage === 'vi'
+    ? 'Bạn đã hoàn thành 65% của lộ trình trung cấp B1. Tập trung vào quy tắc trật tự từ cho "dass" và "weil" hôm nay.'
+    : '"You\'ve completed 65% of the Advanced B1 modules. Focus on word order rules for \'dass\' and \'weil\' today."';
+
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 animate-in fade-in duration-500">
       <SectionHeader 
         title={`Willkommen zurück, ${firstName}!`} 
-        subtitle={`You're on a ${profile?.streak || 0}-day streak. Keep it up!`}
+        subtitle={welcomeSubtitle}
         icon={Zap}
       />
 
-      {/* Hero Banner */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-[#030c29] rounded-[2.5rem] p-10 text-white relative overflow-hidden group">
-          <div className="relative z-10 h-full flex flex-col justify-between max-w-md">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-6 block">Current Objective</span>
-              <h1 className="text-4xl font-bold mb-4 leading-tight">Mastering Implicit <br />Subordinate Clauses.</h1>
-              <p className="text-white/60 text-sm leading-relaxed mb-10">
-                You've completed 65% of the Advanced B1 modules. Focus on word order rules for "dass" and "weil" clauses today.
+      {/* Unified Hero & Progress Section */}
+      <section className="relative">
+        <div className="bg-[#030c29] rounded-[3.5rem] p-12 text-white relative overflow-hidden group shadow-2xl shadow-slate-900/40">
+          <div className="relative z-10 h-full flex flex-col md:flex-row justify-between items-center gap-12">
+            <div className="max-w-xl space-y-8">
+              <div>
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                    {t('activeObjective')}
+                  </span>
+                </div>
+                <h1 className="text-5xl font-black mb-4 leading-tight tracking-tighter italic uppercase">
+                  Implicit Subordinate <br />Clauses
+                </h1>
+                <p className="text-white/40 text-lg leading-relaxed font-medium italic">
+                  {activeObjectiveDesc}
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-4">
+                <button className="bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center gap-3 transition-all shadow-xl shadow-primary/20 active:scale-95 cursor-pointer">
+                  {t('continueLesson')} <ChevronRight className="w-5 h-5" />
+                </button>
+                <div className="flex items-center gap-6 px-8 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
+                   <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">{t('xpProgress')}</span>
+                      <span className="text-lg font-black italic">{profile?.xp || 0} / 2k</span>
+                   </div>
+                   <div className="w-px h-8 bg-white/10" />
+                   <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">{t('dailyStreak')}</span>
+                      <span className="text-lg font-black italic text-orange-400">{profile?.streak || 0} {t('days')}</span>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Element */}
+            <div className="relative shrink-0 hidden lg:block">
+               <div className="w-64 h-64 bg-primary/10 rounded-[3rem] rotate-12 flex items-center justify-center border border-primary/20 backdrop-blur-sm group-hover:rotate-0 transition-all duration-700">
+                  <Brain className="w-40 h-40 text-white/20" />
+               </div>
+               <div className="absolute -inset-10 bg-primary/20 blur-[80px] rounded-full -z-10 animate-pulse" />
+            </div>
+          </div>
+          
+          <div className="absolute right-[-100px] top-[-100px] w-[600px] h-[600px] bg-primary/10 blur-[150px] rounded-full" />
+        </div>
+      </section>
+
+      {/* Embedded Settings View */}
+      <section className="relative">
+        <div className="bg-white border-[1.5px] border-slate-300 rounded-[3.5rem] p-10 md:p-12 shadow-sm relative overflow-hidden">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+            
+            <div className="max-w-md space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-800 border border-slate-200">
+                  <Settings className="w-5 h-5 animate-spin-slow" />
+                </div>
+                <div>
+                  <h3 id="settings-card-title" className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                    {t('settingsTitle')}
+                  </h3>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    DELERNY APP SETTINGS
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                {t('settingsSubtitle')}
               </p>
             </div>
-            <button className="bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 w-fit transition-all shadow-xl shadow-primary/20">
-              Continue Lesson <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="absolute right-[-100px] top-[-100px] w-[500px] h-[500px] bg-primary/20 blur-[120px] rounded-full group-hover:bg-primary/30 transition-all duration-700" />
-          <Brain className="absolute right-10 bottom-10 w-64 h-64 text-white/5 opacity-40 group-hover:scale-110 transition-transform duration-700" />
-        </div>
 
-        <div className="bg-white rounded-[2.5rem] p-8 border border-border shadow-premium flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-warning" /> Leaderboard
-            </h3>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center font-bold text-xs">
-                    {i}
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-slate-200" />
-                  <div className="flex-1">
-                    <p className="font-bold text-xs">User_{i}42</p>
-                    <p className="text-[10px] text-text-secondary">4,230 XP</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-border">
-            <div className="flex justify-between items-end mb-4">
-              <div>
-                <p className="text-[10px] uppercase font-bold text-text-secondary mb-1">XP Goal</p>
-                <p className="font-bold text-lg">{profile?.xp || 0} / 2,000</p>
+            <div className="w-full lg:max-w-md p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-6">
+              <div className="space-y-1">
+                <label className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                  <span>🌐</span> {t('chooseNativeLanguage')}
+                </label>
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                  {t('nativeLanguageDesc')}
+                </p>
               </div>
-              <span className="text-primary font-bold text-xs">{profile ? Math.min(Math.round((profile.xp / 2000) * 100), 100) : 0}%</span>
+
+              <div className="grid grid-cols-2 gap-3.5">
+                
+                {/* Vietnamese selection */}
+                <button
+                  type="button"
+                  id="settings-lang-vi"
+                  onClick={() => setNativeLanguage('vi')}
+                  className={`py-4 px-4 rounded-2xl border text-center transition-all relative flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
+                    nativeLanguage === 'vi'
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold shadow-sm'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold'
+                  }`}
+                >
+                  <span className="text-2xl" role="img" aria-label="Vietnam Flag">🇻🇳</span>
+                  <span className="text-xs">{t('vietnamese')}</span>
+                  {nativeLanguage === 'vi' && (
+                    <div className="absolute top-2 right-2 bg-indigo-600 text-white rounded-full p-0.5">
+                      <Check className="w-3 h-3" />
+                    </div>
+                  )}
+                </button>
+
+                {/* English selection */}
+                <button
+                  type="button"
+                  id="settings-lang-en"
+                  onClick={() => setNativeLanguage('en')}
+                  className={`py-4 px-4 rounded-2xl border text-center transition-all relative flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
+                    nativeLanguage === 'en'
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold shadow-sm'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold'
+                  }`}
+                >
+                  <span className="text-2xl" role="img" aria-label="US Flag">🇺🇸</span>
+                  <span className="text-xs">{t('english')}</span>
+                  {nativeLanguage === 'en' && (
+                    <div className="absolute top-2 right-2 bg-indigo-600 text-white rounded-full p-0.5">
+                      <Check className="w-3 h-3" />
+                    </div>
+                  )}
+                </button>
+
+              </div>
             </div>
-            <div className="w-full bg-background h-2 rounded-full overflow-hidden">
-              <div className="bg-primary h-full" style={{ width: `${profile ? Math.min((profile.xp / 2000) * 100, 100) : 0}%` }} />
-            </div>
+
           </div>
         </div>
       </section>
 
-      {/* Quick Actions */}
-      <section>
-        <SectionHeader title="Recommended Focus" subtitle="Based on your recent mistakes" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <ModuleCard icon="📝" title="Cases & Gender" tag="Grammar" progress={80} />
-          <ModuleCard icon="🍔" title="At the Market" tag="Vocabulary" progress={45} />
-          <ModuleCard icon="🚌" title="Transportation" tag="Vocabulary" progress={12} />
-          <ModuleCard icon="🎯" title="Prepositions" tag="Grammar" progress={95} />
-        </div>
-      </section>
     </div>
   );
 }
-
-const ModuleCard = ({ icon, title, tag, progress }: { icon: string, title: string, tag: string, progress: number }) => (
-  <motion.div
-    whileHover={{ y: -4 }}
-    className="bg-white p-6 rounded-3xl border border-border shadow-sm hover:shadow-md transition-all cursor-pointer group"
-  >
-    <div className="w-12 h-12 bg-background rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
-      {icon}
-    </div>
-    <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/5 px-2 py-1 rounded-md mb-3 inline-block">
-      {tag}
-    </span>
-    <h4 className="font-bold text-lg mb-6 group-hover:text-primary transition-colors">{title}</h4>
-    <div className="space-y-2">
-      <div className="flex justify-between text-[10px] font-bold text-text-secondary uppercase">
-        <span>Completion</span>
-        <span>{progress}%</span>
-      </div>
-      <div className="w-full h-1.5 bg-background rounded-full overflow-hidden">
-        <div className={cn("h-full", progress > 90 ? "bg-success" : "bg-primary")} style={{ width: `${progress}%` }} />
-      </div>
-    </div>
-  </motion.div>
-);

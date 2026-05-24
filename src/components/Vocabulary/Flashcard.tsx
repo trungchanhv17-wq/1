@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Volume2, 
-  Bookmark, 
   Shuffle, 
   CheckCircle2, 
   XCircle
@@ -117,9 +113,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish, onStartQu
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md mx-auto py-8 min-h-[600px]">
+    <div className="flex flex-col items-center w-full max-w-sm mx-auto py-4 min-h-[500px]">
       {/* The Card */}
-      <div className="relative w-full aspect-[3/4] perspective-1000 mb-8 min-h-[450px]">
+      <div className="relative w-full aspect-[3/4] perspective-1000 mb-6 min-h-[360px]">
         <AnimatePresence mode="popLayout" custom={direction}>
           <motion.div
             key={currentWord.id}
@@ -138,35 +134,29 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish, onStartQu
               className="w-full h-full relative preserve-3d"
             >
               {/* Front Side */}
-              <div className="absolute inset-0 backface-hidden p-8 flex flex-col items-center justify-between bg-white shadow-xl rounded-[2.5rem] border border-border">
-                <div className="w-full flex justify-between items-center">
-                  <div className={cn(
-                    "px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 transition-colors",
-                    knownWords.includes(currentWord.id) 
-                      ? "bg-green-100 text-green-600" 
-                      : "bg-gray-100 text-gray-400"
-                  )}>
-                    <CheckCircle2 className="w-3 h-3" /> {knownWords.includes(currentWord.id) ? "Đã biết" : "Chưa thuộc"}
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="p-2 hover:bg-background rounded-full transition-colors text-text-secondary">
-                      <Bookmark className="w-5 h-5" />
-                    </button>
-                    <button className="p-2 hover:bg-background rounded-full transition-colors text-primary bg-primary/5">
-                      <Volume2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center text-center w-full">
+              <div className="absolute inset-0 backface-hidden p-6 flex flex-col items-center justify-between bg-white shadow-xl rounded-[2rem] border-2 border-slate-950">
+                <div className="flex flex-col items-center text-center w-full flex-grow justify-center py-2">
                   {currentWord.article && (
-                    <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full mb-6 tracking-widest uppercase">
-                      {currentWord.article} • {currentWord.level}
-                    </span>
+                    <div className="flex gap-1.5 mb-3">
+                      <span 
+                        className="text-[9px] font-black text-white px-2.5 py-0.5 rounded-full tracking-wider uppercase"
+                        style={{
+                          backgroundColor: 
+                            currentWord.article.toUpperCase() === 'DER' ? '#2563eb' :
+                            currentWord.article.toUpperCase() === 'DIE' ? '#f43f5e' :
+                            '#2ecc71'
+                        }}
+                      >
+                        {currentWord.article}
+                      </span>
+                      <span className="text-[9px] font-black text-slate-905 bg-slate-100 border-2 border-slate-950 px-2.5 py-0.5 rounded-full tracking-wider uppercase">
+                        {currentWord.level}
+                      </span>
+                    </div>
                   )}
                   
                   {currentWord.imageUrl && (
-                    <div className="w-full aspect-video rounded-2xl overflow-hidden mb-6 border border-border shadow-inner bg-slate-50 relative">
+                    <div className="w-full max-w-[180px] h-24 rounded-xl overflow-hidden mb-3 border border-border shadow-inner bg-slate-50 relative">
                       <img 
                         src={currentWord.imageUrl} 
                         alt={currentWord.word}
@@ -176,20 +166,20 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish, onStartQu
                     </div>
                   )}
 
-                  <h2 className="text-4xl font-black text-text-primary mb-2">
+                  <h2 className="text-3xl font-black text-slate-950 mb-1 leading-tight">
                     {currentWord.word}
                   </h2>
-                  <p className="text-text-secondary font-mono text-lg italic opacity-60">
+                  <p className="text-slate-500 font-mono text-sm italic opacity-60">
                     {currentWord.phonetic}
                   </p>
                 </div>
 
-                <div className="w-full space-y-4 text-center">
-                  <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full" />
-                  <p className="text-text-secondary italic text-base px-4">
+                <div className="w-full space-y-3 text-center">
+                  <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent w-full" />
+                  <p className="text-slate-600 italic text-sm px-2 leading-relaxed">
                     &quot;{currentWord.example}&quot;
                   </p>
-                  <p className="text-primary text-xs font-bold flex items-center justify-center gap-1 mt-4">
+                  <p className="text-slate-950 text-[10px] font-black flex items-center justify-center gap-1.5 mt-2 uppercase tracking-[0.15em]">
                     <span>✦</span> Nhấn để xem nghĩa <span>✦</span>
                   </p>
                 </div>
@@ -197,45 +187,25 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish, onStartQu
 
               {/* Back Side */}
               <div 
-                className="absolute inset-0 backface-hidden p-8 flex flex-col items-center justify-center bg-primary text-white shadow-xl rounded-[2.5rem] rotate-y-180"
+                className="absolute inset-0 backface-hidden p-6 flex flex-col items-center justify-center bg-slate-950 text-white shadow-xl rounded-[2rem] border-2 border-slate-900 rotate-y-180"
                 style={{ backfaceVisibility: 'hidden' }}
               >
-                <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full mb-6 uppercase tracking-widest">
+                <span className="text-[9px] font-black bg-white/10 border border-white/20 px-2.5 py-1 rounded-full mb-4 uppercase tracking-widest">
                   Nghĩa Tiếng Việt
                 </span>
-                <h2 className="text-4xl font-bold mb-4 text-center">
+                <h2 className="text-3xl font-black mb-2 text-center italic tracking-tight">
                   {currentWord.meaning}
                 </h2>
                 {currentWord.plural && (
-                  <p className="text-lg opacity-80 text-center">
-                    Số nhiều: <span className="font-bold underline decoration-white/30">{currentWord.plural}</span>
+                  <p className="text-sm opacity-80 text-center font-bold">
+                    Số nhiều: <span className="font-extrabold underline decoration-white/30">{currentWord.plural}</span>
                   </p>
                 )}
-                <p className="mt-12 text-sm opacity-60 italic">Nhấn để quay lại</p>
+                <p className="mt-8 text-[9px] font-black opacity-40 uppercase tracking-widest">Nhấn để quay lại</p>
               </div>
             </motion.div>
           </motion.div>
         </AnimatePresence>
-
-        {/* Floating Nav Arrows */}
-        <button 
-          onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-          className={cn(
-            "absolute left-[-20px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white shadow-lg rounded-full flex items-center justify-center z-20 border border-border hover:bg-background transition-all",
-            currentIndex === 0 && "opacity-30 cursor-not-allowed"
-          )}
-        >
-          <ChevronLeft className="text-text-secondary" />
-        </button>
-        <button 
-          onClick={(e) => { e.stopPropagation(); handleNext(); }}
-          className={cn(
-            "absolute right-[-20px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white shadow-lg rounded-full flex items-center justify-center z-20 border border-border hover:bg-background transition-all",
-            currentIndex === words.length - 1 && "opacity-30 cursor-not-allowed"
-          )}
-        >
-          <ChevronRight className="text-text-secondary" />
-        </button>
       </div>
 
       {/* Progress Dots */}
@@ -245,7 +215,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish, onStartQu
             key={i}
             className={cn(
               "h-2 rounded-full transition-all duration-300",
-              i === currentIndex ? "w-8 bg-primary" : "w-2 bg-border hover:bg-primary/30"
+              i === currentIndex ? "w-8 bg-slate-950" : "w-2 bg-slate-200 hover:bg-slate-400"
             )}
           />
         ))}
@@ -256,46 +226,46 @@ export const Flashcard: React.FC<FlashcardProps> = ({ words, onFinish, onStartQu
         <div className="flex flex-col items-center gap-2">
           <button 
             onClick={() => handleNext()}
-            className="w-16 h-16 rounded-full border-2 border-red-100 flex items-center justify-center text-red-400 hover:bg-red-50 hover:border-red-400 transition-all group"
+            className="w-16 h-16 rounded-full border-2 border-red-200 bg-white flex items-center justify-center text-red-500 hover:bg-red-50 hover:border-red-400 transition-all group shadow-md"
           >
             <XCircle className="w-8 h-8 group-active:scale-90 transition-transform" />
           </button>
-          <span className="text-[10px] uppercase font-bold text-red-400">Chưa biết</span>
+          <span className="text-[10px] uppercase font-bold text-red-500">Chưa biết</span>
         </div>
 
-        <button className="w-14 h-14 bg-primary/5 text-primary rounded-2xl flex items-center justify-center hover:bg-primary/10 transition-all">
-          <Shuffle className="w-6 h-6" />
+        <button className="w-14 h-14 bg-slate-50 text-slate-800 border-2 border-slate-200 rounded-2xl flex items-center justify-center hover:bg-slate-950 hover:text-white transition-all shadow-md">
+          <Shuffle className="w-5 h-5" />
         </button>
 
         <div className="flex flex-col items-center gap-2">
           <button 
             onClick={() => { toggleKnown(currentWord.id); handleNext(); }}
             className={cn(
-              "w-20 h-20 rounded-full border-2 flex items-center justify-center transition-all group",
+              "w-20 h-20 rounded-full border-2 bg-white flex items-center justify-center transition-all group shadow-md",
               knownWords.includes(currentWord.id) 
-                ? "bg-green-500 border-green-500 text-white shadow-lg shadow-green-200" 
-                : "border-green-100 text-green-400 hover:bg-green-50 hover:border-green-400"
+                ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200" 
+                : "border-emerald-200 text-emerald-500 hover:bg-emerald-50 hover:border-emerald-400"
             )}
           >
             <CheckCircle2 className="w-10 h-10 group-active:scale-90 transition-transform" />
           </button>
-          <span className="text-[10px] uppercase font-bold text-green-500">Đã biết</span>
+          <span className="text-[10px] uppercase font-bold text-emerald-500">Đã biết</span>
         </div>
       </div>
 
       <button 
         onClick={onStartQuiz}
-        className="w-full py-4 bg-primary/5 text-primary font-bold rounded-2xl border border-primary/20 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 mb-8"
+        className="w-full py-4 bg-slate-950 text-white font-black uppercase tracking-wider text-xs rounded-2xl border-2 border-slate-950 hover:bg-slate-800 transition-all flex items-center justify-center gap-2 mb-8 shadow-lg shadow-slate-900/10"
       >
-        🏷️ Luyện giống danh từ (der/die/das)
+        🎯 Luyện giống danh từ (der/die/das)
       </button>
 
       {/* Keyboard Shortcuts Help */}
-      <div className="bg-white border border-border rounded-xl px-4 py-2 flex gap-4 text-[10px] text-text-secondary font-medium">
-        <div className="flex items-center gap-1"><span className="bg-background px-1.5 py-0.5 rounded border border-border">Space</span> lật</div>
-        <div className="flex items-center gap-1"><span className="bg-background px-1.5 py-0.5 rounded border border-border">← →</span> chuyển</div>
-        <div className="flex items-center gap-1"><span className="bg-background px-1.5 py-0.5 rounded border border-border">Z</span> đã biết</div>
-        <div className="flex items-center gap-1"><span className="bg-background px-1.5 py-0.5 rounded border border-border">X</span> chưa biết</div>
+      <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-3.5 flex flex-wrap gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-wider justify-center w-full">
+        <div className="flex items-center gap-1.5"><span className="bg-white px-2 py-1 rounded-lg border-2 border-slate-200 shadow-sm text-slate-800 font-black">Space</span> lật</div>
+        <div className="flex items-center gap-1.5"><span className="bg-white px-2 py-1 rounded-lg border-2 border-slate-200 shadow-sm text-slate-800 font-black">← →</span> chuyển</div>
+        <div className="flex items-center gap-1.5"><span className="bg-white px-2 py-1 rounded-lg border-2 border-slate-200 shadow-sm text-slate-800 font-black">Z</span> đã biết</div>
+        <div className="flex items-center gap-1.5"><span className="bg-white px-2 py-1 rounded-lg border-2 border-slate-200 shadow-sm text-slate-800 font-black">X</span> chưa biết</div>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, ArrowRight, Sparkles } from 'lucide-react';
 import { authService } from '../../services/userService';
+import { Logo } from '../Logo';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -71,16 +72,16 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
         {/* Logo & Header */}
         <div className="text-center mb-8">
           <motion.div 
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            className="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-900/20 overflow-hidden"
+            whileHover={{ scale: 1.05, rotate: 3 }}
+            className="w-24 h-24 flex items-center justify-center mx-auto mb-6 overflow-hidden"
           >
-            <img src="/src/assets/images/ruma_logo_png_1779102933223.png" alt="Ruma Logo" className="w-full h-full object-cover" />
+            <Logo size="100%" variant="full" className="w-full h-full object-contain" />
           </motion.div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-2">
-            Ruma
+            Delerny
           </h1>
           <p className="text-slate-500 text-sm font-medium">
-            Learn German smarter with AI-powered insights.
+            Learn German naturally with AI-powered insights.
           </p>
         </div>
 
